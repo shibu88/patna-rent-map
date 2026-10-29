@@ -11,10 +11,12 @@ const clusterRenderer = {
     );
 
     const el = document.createElement('div');
-    el.className = 'cluster-bubble' + (availCount ? ' has-avbl' : '');
+    el.className = 'cluster-marker' + (availCount ? ' has-avbl' : '');
     el.innerHTML =
+      `<div class="cluster-bubble${availCount ? ' has-avbl' : ''}">` +
       `<span class="cluster-count">${count} flats</span>` +
-      (availCount ? `<span class="cluster-avbl">${availCount} AVBL</span>` : '');
+      (availCount ? `<span class="cluster-avbl">${availCount} AVBL</span>` : '') +
+      `</div>`;
 
     return new google.maps.marker.AdvancedMarkerElement({
       position,

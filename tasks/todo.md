@@ -114,6 +114,73 @@ Constraint found in `firestore.rules`: every pin must carry all field keys, and 
 
 ## Review
 
+### Change — top/filter bar now centered + transparent (floats over the map)
+- Request: make the filter bar centred and transparent like the reference (bengaluru.rent).
+- Fix (`style.css`): `#topbar` lost its solid full-width panel (removed `background: var(--panel)`,
+  border-bottom, box-shadow) → now `background: transparent` + `align-items: center`. Each control
+  keeps its own pill: the search box, the `⚙ Filters` button, and the `#filter-panel` (now
+  `width: min(100%, 560px)` so it's a centred card). `#result-count` got a text-shadow to stay
+  readable over the map.
+- Verified in browser: brand + search + Filters/count are centred and float over the map with no
+  solid bar; the Filters panel opens as a centred card. Build clean.
+
+### Change — markers now point to the exact location (teardrop tail)
+- Request: pins should show the precise spot (reference = map-pin/teardrop). The old label sat
+  centred on the point (`transform: translateY(-50%)`), so the exact location was ambiguous.
+- Fix: wrapped the price label in a `.pin-marker` column with a downward CSS-triangle tail; removed
+  the centring transform. The marker's bottom-centre anchor is now the tail tip = exact coordinate.
+  Tail inherits `--pin-color` (green rent / orange to-let). Did the same for clusters: `.cluster-marker`
+  wrapper + tail (green tip when any flat is available). `pins.js`, `cluster.js`, `style.css`.
+- Kept the rent text on the pin (the map's whole point) rather than switching to an icon-only pin.
+- Verified in browser: single pins (e.g. "2BHK · ₹18K") and clusters ("2 flats", "4 flats") show a
+  crisp tail pointing at the spot. Build clean.
+
+### Bugfix — new "List My Flat" pins didn't show until a page reload
+- Root cause: `setupForm(map)` took no refresh callback and `onSubmit` never re-rendered markers after
+  `addDoc`, so pins added via the main form only appeared on a manual reload. (The Spot-a-To-Let flow
+  already refreshed via its callback — that's why the inconsistency.)
+- Fix: added a shared `reloadPins()` in `main.js` (re-reads pins + re-applies filters) and passed it to
+  both `setupForm(map, reloadPins)` and `setupSpot(map, reloadPins)`. `form.js` now stores `onSaved`
+  and `await`s it after a successful save (before the alert).
+- Verified in browser on the dev server: saved two pins back-to-back; the result count went 4→5→6 and
+  the new markers (incl. "2BHK · ₹18K") appeared immediately with no reload. Build clean.
+
+### Change — removed photo upload (user choice; Storage unavailable on Spark)
+- Per user decision, removed the Photos section entirely rather than keep a broken/slow path:
+  `index.html` (Photos fieldset), `form.js` (storage imports, `selectedImages`, `onImagesChange`,
+  `clearImagePreviews`, `uploadImages`, `withTimeout`, the upload block in `onSubmit`, reset cleanup),
+  `style.css` (image preview/thumb rules + `fieldset.images` from shared selectors). `imageUrls: []`
+  stays on the pin (data model + rules unchanged). Build clean; verified in browser the form goes
+  feedback → Location → Save with no Photos section. Deploy still pending (user runs prod deploy).
+
+### Bugfix — "Save pin" fails when photos are attached (systematic debug)
+- Reproduced on the live site: a pin with rent + locality + location but **no photos saved fine**
+  ("1 flats", green 2BHK·₹12K marker). A direct authenticated Storage upload test from the page
+  **hung for 45s and timed out** — Firebase Storage (bucket `patna-rent-map.firebasestorage.app`)
+  is not functional on the free Spark plan.
+- Root cause: `form.js onSubmit` uploaded photos **before** `addDoc`, with no timeout and the upload
+  fatal to the whole save. So any attached photo → `uploadBytes` hangs → the write never happens
+  and the user sees no save. (Without photos the path is skipped and saving works.)
+- Fix (`form.js`): photo upload is now best-effort — wrapped in its own try/catch with a 15s
+  `withTimeout`. On failure/timeout the pin saves **without** photos and the success alert notes
+  "Photos could not be uploaded…". The no-photo path is unchanged. Build compiles.
+- Deploy was blocked by the environment's production-deploy policy this time — user runs
+  `netlify deploy --prod --dir dist` (or it goes out once GitHub→Netlify auto-deploy is linked).
+- Follow-up options for the user: enable Firebase Storage (needs Blaze) to actually host photos,
+  or remove the photo upload UI entirely while on Spark.
+
+### Fix — Netlify badge over the FAB + stale live site (deployed)
+- The live site was still the pre-toolbar deploy (no right-side buttons) because auto-deploy isn't
+  linked yet; and Netlify injects a free-tier "Powered by Netlify" badge (`/.netlify/scripts/hud`,
+  `data-account-tier="free"`) bottom-right, which sat over the "+ List My Flat" button. The badge is
+  injected by Netlify, not in our HTML, so it can't be removed in code (only by upgrading the plan).
+- Fix: moved Google's zoom control to `LEFT_BOTTOM` (`map.js`) and raised `#list-flat-btn` to
+  `bottom: 58px` (`style.css`) so the bottom-right stays clear of the badge. Built and deployed to
+  production via `netlify deploy --prod` (deploy 6ae35249). Verified in-browser: toolbar is live and
+  the button no longer overlaps the badge.
+- Note: this was a manual CLI deploy (builds locally with `.env`). GitHub→Netlify auto-deploy still
+  needs the user to (1) set the `VITE_*` env vars on Netlify and (2) link the repo in the UI.
+
 ### Bugfix — "Pick on map" has no next step and can't pinpoint (systematic debug, verified in browser)
 - Reproduced in Chrome: the old flow closed the form, showed a one-line hint, and auto-reopened the
   form on the **first** map tap. Root causes: (1) no confirmation step — one imprecise tap ended

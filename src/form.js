@@ -1,24 +1,21 @@
 // "List My Flat" form: collect fields, pick a location, save a pin to Firestore.
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage, ensureSignedIn, isFirebaseConfigured } from './firebase.js';
+import { db, ensureSignedIn, isFirebaseConfigured } from './firebase.js';
 import {
   PATNA_BOUNDS,
   LAT_LNG_DECIMALS,
   RENT_MIN,
   RENT_MAX,
   FEEDBACK_MAX,
-  MAX_IMAGES,
-  MAX_IMAGE_MB,
 } from './config.js';
 
 let map;
+let onSaved = () => {}; // called after a pin is saved so the map can refresh
 let chosen = null; // { lat, lng }
 let prevChosen = null; // snapshot so "Cancel" can restore the pre-pick location
 let pickMarker = null;
 let pickListener = null;
 let AdvancedMarkerElement = null;
-let selectedImages = []; // File[]
 
 const $ = (sel) => document.querySelector(sel);
 const round = (n) => {
@@ -31,8 +28,9 @@ const inPatna = (lat, lng) =>
   lng >= PATNA_BOUNDS.west &&
   lng <= PATNA_BOUNDS.east;
 
-export function setupForm(mapInstance) {
+export function setupForm(mapInstance, savedCallback) {
   map = mapInstance;
+  onSaved = savedCallback || (() => {});
 
   const overlay = $('#form-overlay');
   const form = $('#flat-form');
@@ -52,9 +50,6 @@ export function setupForm(mapInstance) {
   form.feedback.addEventListener('input', () => {
     $('#feedback-count').textContent = `${form.feedback.value.length} / ${FEEDBACK_MAX}`;
   });
-
-  // Images.
-  $('#image-input').addEventListener('change', onImagesChange);
 
   // Location.
   $('#use-gps').addEventListener('click', useGps);
@@ -82,57 +77,6 @@ function syncConditional() {
   const isRoom = form.listingType.value === 'room' || form.listingType.value === 'flatmate';
   document.querySelectorAll('[data-when-room]').forEach((el) => (el.hidden = !isRoom));
   document.querySelector('[data-when-date]').hidden = form.availableKind.value !== 'date';
-}
-
-// --- Images ---
-function onImagesChange(e) {
-  const input = e.target;
-  const picked = Array.from(input.files || []);
-  const maxBytes = MAX_IMAGE_MB * 1024 * 1024;
-
-  const tooBig = picked.find((f) => f.size > maxBytes);
-  if (tooBig) {
-    showErr(`"${tooBig.name}" is larger than ${MAX_IMAGE_MB} MB.`);
-    input.value = '';
-    return;
-  }
-  if (picked.length > MAX_IMAGES) {
-    showErr(`Please choose at most ${MAX_IMAGES} photos.`);
-    input.value = '';
-    return;
-  }
-  $('#form-err').hidden = true;
-
-  // Replace the current selection and rebuild previews.
-  clearImagePreviews();
-  selectedImages = picked;
-  const wrap = $('#image-previews');
-  selectedImages.forEach((file) => {
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(file);
-    img.className = 'thumb';
-    img.alt = file.name;
-    wrap.appendChild(img);
-  });
-}
-
-function clearImagePreviews() {
-  const wrap = $('#image-previews');
-  wrap.querySelectorAll('img').forEach((img) => URL.revokeObjectURL(img.src));
-  wrap.innerHTML = '';
-}
-
-async function uploadImages(uid) {
-  const urls = [];
-  const stamp = Date.now();
-  for (let i = 0; i < selectedImages.length; i++) {
-    const file = selectedImages[i];
-    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const r = ref(storage, `pin-images/${uid}/${stamp}_${i}_${safe}`);
-    await uploadBytes(r, file);
-    urls.push(await getDownloadURL(r));
-  }
-  return urls;
 }
 
 // --- Location handling ---
@@ -295,7 +239,7 @@ async function onSubmit(e) {
     locality: f.locality.trim(),
     society: f.society.trim(),
     feedback: f.feedback.trim(),
-    imageUrls: [], // filled after upload below
+    imageUrls: [], // kept in the data model; photo upload is disabled for now
     ownerUid: '', // set after sign-in below
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -307,14 +251,10 @@ async function onSubmit(e) {
   try {
     const user = await ensureSignedIn();
     pin.ownerUid = user.uid;
-    if (selectedImages.length) {
-      submitBtn.textContent = 'Uploading photos…';
-      pin.imageUrls = await uploadImages(user.uid);
-    }
-    submitBtn.textContent = 'Saving…';
     await addDoc(collection(db, 'pins'), pin);
     resetForm(form);
     closeSheet();
+    await onSaved(); // refresh the map so the new pin appears immediately
     alert('Thanks! Your pin was saved.');
   } catch (err) {
     console.error(err);
@@ -329,8 +269,6 @@ function resetForm(form) {
   form.reset();
   chosen = null;
   if (pickMarker) pickMarker.map = null;
-  selectedImages = [];
-  clearImagePreviews();
   setLocDisplay('No location chosen yet');
   $('#feedback-count').textContent = `0 / ${FEEDBACK_MAX}`;
   syncConditional();

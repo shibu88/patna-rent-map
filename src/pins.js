@@ -147,14 +147,16 @@ async function getMarkerLib() {
 export async function createPinMarkers(pins, onClick) {
   const { AdvancedMarkerElement } = await getMarkerLib();
   return pins.map((pin) => {
+    // Wrapper is a map-pin: the label sits on top, a tail points down so its
+    // tip (the marker's bottom-centre anchor) lands on the exact coordinate.
     const el = document.createElement('div');
-    el.className = 'pin-label';
+    el.className = 'pin-marker';
     el.style.setProperty('--pin-color', PIN_KIND_COLORS[pin.pinKind] || PIN_KIND_COLORS.rent);
 
-    let html = `<span class="pin-main">${bhkLabel(pin.bhk)} · ₹${formatRent(pin.rentAmount)}</span>`;
-    if (pin.ratingCount) html += `<span class="pin-star">★ ${pin.avgRating.toFixed(1)}</span>`;
-    if (pin.reportCount) html += `<span class="pin-reports">${pin.reportCount}</span>`;
-    el.innerHTML = html;
+    let inner = `<span class="pin-main">${bhkLabel(pin.bhk)} · ₹${formatRent(pin.rentAmount)}</span>`;
+    if (pin.ratingCount) inner += `<span class="pin-star">★ ${pin.avgRating.toFixed(1)}</span>`;
+    if (pin.reportCount) inner += `<span class="pin-reports">${pin.reportCount}</span>`;
+    el.innerHTML = `<div class="pin-label">${inner}</div>`;
 
     const marker = new AdvancedMarkerElement({
       position: { lat: pin.lat, lng: pin.lng },

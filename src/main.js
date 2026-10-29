@@ -43,6 +43,12 @@ async function applyFilters() {
   updateResultCount(filtered.length, allPins.length);
 }
 
+// Re-read all pins and re-render markers (used after a new pin is saved).
+async function reloadPins() {
+  allPins = await loadPins();
+  await applyFilters();
+}
+
 async function openDetail(pin) {
   const aboveAvg = isAboveAvg(pin, allPins);
   let userInteraction = { rating: null, reported: null };
@@ -115,12 +121,9 @@ async function init() {
   try {
     const map = await createMap(document.getElementById('map'));
     await setupSearch(document.getElementById('search'), map);
-    setupForm(map);
+    setupForm(map, reloadPins);
     setupToolbar(map);
-    setupSpot(map, async () => {
-      allPins = await loadPins();
-      await applyFilters();
-    });
+    setupSpot(map, reloadPins);
     setupDetail();
 
     if (isFirebaseConfigured()) {

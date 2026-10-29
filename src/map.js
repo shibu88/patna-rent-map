@@ -55,6 +55,9 @@ export async function createMap(container) {
     colorScheme: 'DARK', // dark base map; only applied at creation time (ColorScheme enum lives in "core")
     disableDefaultUI: true,
     zoomControl: true,
+    // Keep zoom on the bottom-left so the bottom-right stays clear for the
+    // "List My Flat" button and the Netlify free-tier badge.
+    zoomControlOptions: { position: google.maps.ControlPosition.LEFT_BOTTOM },
     gestureHandling: 'greedy', // one-finger pan/zoom on mobile
     clickableIcons: false,
   });

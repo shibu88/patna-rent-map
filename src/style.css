@@ -43,11 +43,10 @@ body {
   z-index: 10;
   display: flex;
   flex-direction: column;
+  align-items: center; /* centre the search + filter controls */
   gap: 8px;
   padding: calc(10px + env(safe-area-inset-top, 0)) 12px 10px;
-  background: var(--panel);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+  background: transparent; /* float over the map; each control keeps its own pill */
   pointer-events: none; /* let map receive drags; children re-enable */
 }
 
@@ -101,11 +100,13 @@ gmp-place-autocomplete {
 }
 #result-count {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* readable over the map */
 }
 
 #filter-panel {
   pointer-events: auto;
+  width: min(100%, 560px); /* centred panel, matches the search width */
   margin-top: 2px;
   max-height: 62vh;
   overflow-y: auto;
@@ -221,7 +222,23 @@ gmp-place-autocomplete {
   line-height: 1.4;
 }
 
-/* --- Pin markers --- */
+/* --- Pin markers (label + downward tail; tail tip marks the exact spot) --- */
+.pin-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.pin-marker::after {
+  content: '';
+  width: 0;
+  height: 0;
+  margin-top: -1px; /* overlap the label border so the tail joins it */
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--pin-color, var(--accent));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
+}
 .pin-label {
   display: inline-flex;
   align-items: center;
@@ -235,8 +252,6 @@ gmp-place-autocomplete {
   font-weight: 700;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  transform: translateY(-50%);
-  cursor: pointer;
 }
 .pin-label .pin-main {
   color: var(--pin-color, var(--accent));
@@ -258,7 +273,26 @@ gmp-place-autocomplete {
   font-size: 11px;
 }
 
-/* --- Cluster bubbles --- */
+/* --- Cluster bubbles (with a downward tail, like the single pins) --- */
+.cluster-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.cluster-marker::after {
+  content: '';
+  width: 0;
+  height: 0;
+  margin-top: -2px;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid rgba(255, 255, 255, 0.25);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
+}
+.cluster-marker.has-avbl::after {
+  border-top-color: var(--accent);
+}
 .cluster-bubble {
   display: flex;
   flex-direction: column;
@@ -433,7 +467,8 @@ gmp-place-autocomplete {
 #list-flat-btn {
   position: absolute;
   right: 16px;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0));
+  /* Sit above the Netlify free-tier "Powered by Netlify" badge (bottom-right). */
+  bottom: calc(58px + env(safe-area-inset-bottom, 0));
   z-index: 15;
   padding: 13px 18px;
   border: none;
@@ -635,30 +670,15 @@ gmp-place-autocomplete {
   font-size: 12px;
   color: var(--muted);
 }
-fieldset.loc,
-fieldset.images {
+fieldset.loc {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 9px;
   padding: 10px 12px;
 }
-fieldset.loc legend,
-fieldset.images legend {
+fieldset.loc legend {
   font-size: 13px;
   color: var(--muted);
   padding: 0 6px;
-}
-#image-previews {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-#image-previews .thumb {
-  width: 64px;
-  height: 64px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 .loc-btns {
   display: flex;
