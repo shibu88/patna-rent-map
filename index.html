@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0b0f14" />
+    <title>Patna Rent Map</title>
+  </head>
+  <body>
+    <div id="app">
+      <header id="topbar">
+        <div id="brand">Patna Rent Map</div>
+        <div id="search"><!-- Places autocomplete element mounts here --></div>
+        <div id="filter-bar">
+          <button id="filter-toggle" type="button">⚙ Filters</button>
+          <span id="result-count"></span>
+        </div>
+
+        <div id="filter-panel" hidden>
+          <div class="fp-group">
+            <span class="fp-label">BHK</span>
+            <div class="chips" id="bhk-chips">
+              <button type="button" data-bhk="1RK">1RK</button>
+              <button type="button" data-bhk="1">1</button>
+              <button type="button" data-bhk="2">2</button>
+              <button type="button" data-bhk="3">3</button>
+              <button type="button" data-bhk="4">4</button>
+              <button type="button" data-bhk="5+">5+</button>
+            </div>
+          </div>
+
+          <div class="fp-group">
+            <span class="fp-label">Type</span>
+            <div class="chips" id="kind-chips">
+              <button type="button" data-kind="rent">Rent paid</button>
+              <button type="button" data-kind="tolet">To-Let</button>
+            </div>
+          </div>
+
+          <div class="fp-group fp-row">
+            <label>Min rent
+              <input id="f-rent-min" type="number" inputmode="numeric" min="0" step="500" placeholder="₹ min" />
+            </label>
+            <label>Max rent
+              <input id="f-rent-max" type="number" inputmode="numeric" min="0" step="500" placeholder="₹ max" />
+            </label>
+          </div>
+
+          <div class="fp-group fp-row">
+            <label>Listing type
+              <select id="f-listing">
+                <option value="any">Any</option>
+                <option value="whole_flat">Whole flat</option>
+                <option value="room">Room</option>
+                <option value="flatmate">Flatmate</option>
+              </select>
+            </label>
+            <label>Furnished
+              <select id="f-furnished">
+                <option value="any">Any</option>
+                <option value="unfurnished">Unfurnished</option>
+                <option value="semi">Semi</option>
+                <option value="full">Full</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="fp-group fp-row">
+            <label>Food
+              <select id="f-food">
+                <option value="any">Any</option>
+                <option value="veg">Veg only</option>
+              </select>
+            </label>
+            <label>Gender
+              <select id="f-gender">
+                <option value="any">Any</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="fp-foot">
+            <label class="fp-check"><input id="f-available" type="checkbox" /> Available only</label>
+            <button id="f-reset" type="button">Reset</button>
+          </div>
+        </div>
+      </header>
+      <div id="map"></div>
+
+      <!-- Right-side map toolbar (icon + label). Satellite is wired in step 7a;
+           Metro / Green Cover / Spot a To-Let are wired in later steps. -->
+      <div id="toolbar">
+        <button type="button" class="tb-btn" id="tb-tolet" title="Spot a To-Let board">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7z"/><circle cx="12" cy="9" r="2.4"/></svg>
+          <span>Spot a To-Let</span>
+        </button>
+        <button type="button" class="tb-btn" id="tb-metro" title="Toggle Patna Metro (approx.)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="13" rx="3"/><path d="M6 10h12"/><circle cx="9.2" cy="13" r="0.9"/><circle cx="14.8" cy="13" r="0.9"/><path d="M8 17l-1.5 4M16 17l1.5 4"/></svg>
+          <span>Metro</span>
+        </button>
+        <button type="button" class="tb-btn" id="tb-satellite" title="Toggle satellite view">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19"/></svg>
+          <span>Satellite</span>
+        </button>
+        <button type="button" class="tb-btn" id="tb-green" title="Toggle green cover (approx.)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 6 11h3l-4 6h14l-4-6h3z"/><path d="M12 17v5"/></svg>
+          <span>Green Cover</span>
+        </button>
+      </div>
+
+      <div id="app-error" role="alert" hidden></div>
+
+      <!-- Floating action button to open the listing form -->
+      <button id="list-flat-btn" type="button">+ List My Flat</button>
+
+      <!-- Pin detail panel (bottom sheet) -->
+      <div id="detail-overlay" hidden>
+        <div id="detail-sheet">
+          <div class="sheet-head">
+            <h2 id="detail-title">Flat</h2>
+            <button id="detail-close" type="button" aria-label="Close">×</button>
+          </div>
+          <div class="sheet-body" id="detail-body"><!-- filled by detail.js --></div>
+        </div>
+      </div>
+
+      <!-- Control bar shown while picking a location on the map -->
+      <div id="pick-hint" hidden>
+        <span id="pick-hint-text">Tap the map to place your pin, then drag it to adjust.</span>
+        <div class="pick-hint-btns">
+          <button id="pick-cancel" type="button">Cancel</button>
+          <button id="pick-done" type="button" disabled>Use this location</button>
+        </div>
+      </div>
+
+      <!-- Spot a To-Let: hint while placing the spotted board -->
+      <div id="spot-hint" hidden>Tap the map where you saw the To-Let board <button id="spot-hint-cancel" type="button">Cancel</button></div>
+
+      <!-- Spot a To-Let: quick-add bottom sheet -->
+      <div id="spot-overlay" hidden>
+        <form id="spot-form" novalidate>
+          <div class="sheet-head">
+            <h2>Spot a To-Let</h2>
+            <button id="spot-close" type="button" aria-label="Close">×</button>
+          </div>
+          <div class="sheet-body">
+            <p class="hint" id="spot-loc">Location: —</p>
+            <label>BHK
+              <select name="bhk" required>
+                <option value="1RK">1 RK</option>
+                <option value="1">1 BHK</option>
+                <option value="2" selected>2 BHK</option>
+                <option value="3">3 BHK</option>
+                <option value="4">4 BHK</option>
+                <option value="5+">5+ BHK</option>
+              </select>
+            </label>
+            <label>Asking rent (₹/month)
+              <input name="rentAmount" type="number" inputmode="numeric" min="500" max="500000" step="500" required placeholder="e.g. 12000" />
+            </label>
+            <label>Locality
+              <input name="locality" type="text" maxlength="80" required placeholder="e.g. Kankarbagh" />
+            </label>
+            <label>Note (optional)
+              <textarea name="feedback" rows="2" maxlength="500" placeholder="e.g. 2nd floor, board near the park"></textarea>
+            </label>
+            <p class="form-err" id="spot-err" hidden></p>
+          </div>
+          <div class="sheet-foot">
+            <button id="spot-submit" type="submit">Save To-Let</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Listing form (bottom sheet) -->
+      <div id="form-overlay" hidden>
+        <form id="flat-form" novalidate>
+          <div class="sheet-head">
+            <h2>List My Flat</h2>
+            <button id="form-close" type="button" aria-label="Close">×</button>
+          </div>
+
+          <div class="sheet-body">
+            <label>Listing type
+              <select name="listingType" required>
+                <option value="whole_flat">Whole flat</option>
+                <option value="room">Room</option>
+                <option value="flatmate">Flatmate</option>
+              </select>
+            </label>
+
+            <label>BHK
+              <select name="bhk" required>
+                <option value="1RK">1 RK</option>
+                <option value="1">1 BHK</option>
+                <option value="2" selected>2 BHK</option>
+                <option value="3">3 BHK</option>
+                <option value="4">4 BHK</option>
+                <option value="5+">5+ BHK</option>
+              </select>
+            </label>
+
+            <label>Monthly rent (₹)
+              <input name="rentAmount" type="number" inputmode="numeric" min="500" max="500000" step="500" required placeholder="e.g. 12000" />
+            </label>
+
+            <label data-when-room hidden>Rooms available
+              <select name="roomsAvailable">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+              </select>
+            </label>
+
+            <label data-when-room hidden>Rent per room (₹, optional)
+              <input name="rentPerRoom" type="number" inputmode="numeric" min="500" max="500000" step="500" placeholder="for room / flatmate" />
+            </label>
+
+            <div class="row">
+              <label>Deposit (months)
+                <input name="depositMonths" type="number" inputmode="numeric" min="0" max="24" step="1" placeholder="e.g. 2" />
+              </label>
+              <label>Area (sqft)
+                <input name="sqft" type="number" inputmode="numeric" min="50" max="20000" step="10" placeholder="optional" />
+              </label>
+            </div>
+
+            <label>Available from
+              <select name="availableKind">
+                <option value="asap">Available now</option>
+                <option value="date">On a date…</option>
+                <option value="none">Occupied / not available</option>
+              </select>
+            </label>
+            <label data-when-date hidden>Date
+              <input name="availableDate" type="date" />
+            </label>
+
+            <label>Furnished
+              <select name="furnished">
+                <option value="">Not specified</option>
+                <option value="unfurnished">Unfurnished</option>
+                <option value="semi">Semi-furnished</option>
+                <option value="full">Fully furnished</option>
+              </select>
+            </label>
+
+            <div class="row">
+              <label>Gated
+                <select name="gated"><option value="">—</option><option value="true">Yes</option><option value="false">No</option></select>
+              </label>
+              <label>Pet friendly
+                <select name="petFriendly"><option value="">—</option><option value="true">Yes</option><option value="false">No</option></select>
+              </label>
+            </div>
+            <label>Maintenance included
+              <select name="maintenanceIncluded"><option value="">—</option><option value="true">Yes</option><option value="false">No</option></select>
+            </label>
+
+            <label>Occupant type
+              <select name="occupantType" required>
+                <option value="any">Any</option>
+                <option value="family">Family</option>
+                <option value="bachelors">Bachelors</option>
+              </select>
+            </label>
+            <div class="row">
+              <label>Food preference
+                <select name="prefFood" required>
+                  <option value="any">Any</option>
+                  <option value="veg">Veg only</option>
+                </select>
+              </label>
+              <label>Gender preference
+                <select name="prefGender" required>
+                  <option value="any">Any</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Locality
+              <input name="locality" type="text" maxlength="80" required placeholder="e.g. Kankarbagh" />
+            </label>
+            <label>Society / building (optional)
+              <input name="society" type="text" maxlength="80" placeholder="e.g. Shivpuri Apartments" />
+            </label>
+
+            <label>Short feedback (optional)
+              <textarea name="feedback" rows="2" maxlength="500" placeholder="anything useful for others"></textarea>
+              <span class="hint" id="feedback-count">0 / 500</span>
+            </label>
+
+            <fieldset class="images">
+              <legend>Photos (optional, up to 5)</legend>
+              <input id="image-input" name="images" type="file" accept="image/*" multiple />
+              <div id="image-previews"></div>
+            </fieldset>
+
+            <fieldset class="loc">
+              <legend>Location</legend>
+              <div class="loc-btns">
+                <button id="use-gps" type="button">📍 Use GPS</button>
+                <button id="pick-map" type="button">🗺️ Pick on map</button>
+              </div>
+              <span class="hint" id="loc-display">No location chosen yet</span>
+            </fieldset>
+
+            <p class="form-err" id="form-err" hidden></p>
+          </div>
+
+          <div class="sheet-foot">
+            <button id="form-submit" type="submit">Save pin</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

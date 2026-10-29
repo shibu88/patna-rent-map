@@ -1,0 +1,18 @@
+{
+  "name": "patna-rent-map",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@googlemaps/markerclusterer": "^2.5.3",
+    "firebase": "^11.1.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  }
+}

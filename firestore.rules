@@ -1,0 +1,100 @@
+rules_version = '2';
+
+// Patna Rent Map — production rules.
+// Public read; signed-in create with full validation; owner-only edit/delete;
+// one rating and one report per user per pin (enforced by doc id).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- pins ---
+    function validPin(d) {
+      return d.keys().hasOnly([
+          'lat','lng','pinKind','listingType','bhk','rentAmount','rentPerRoom',
+          'roomsAvailable','depositMonths','sqft','availableFrom','furnished',
+          'gated','petFriendly','maintenanceIncluded','occupantType','prefFood',
+          'prefGender','locality','society','feedback','imageUrls','ownerUid',
+          'createdAt','updatedAt'
+        ])
+        // location: inside the Patna bounding box
+        && d.lat is number && d.lat >= 25.35 && d.lat <= 25.75
+        && d.lng is number && d.lng >= 84.9 && d.lng <= 85.45
+        // enums
+        && d.pinKind in ['rent','tolet']
+        && d.listingType in ['whole_flat','room','flatmate']
+        && d.bhk in ['1RK','1','2','3','4','5+']
+        // rent range
+        && d.rentAmount is number && d.rentAmount >= 500 && d.rentAmount <= 500000
+        // optional numbers (null or in range)
+        && (d.rentPerRoom == null || (d.rentPerRoom is number && d.rentPerRoom >= 0 && d.rentPerRoom <= 500000))
+        && (d.roomsAvailable == null || (d.roomsAvailable is number && d.roomsAvailable >= 1 && d.roomsAvailable <= 9))
+        && (d.depositMonths == null || (d.depositMonths is number && d.depositMonths >= 0 && d.depositMonths <= 24))
+        && (d.sqft == null || (d.sqft is number && d.sqft >= 0 && d.sqft <= 20000))
+        // optional enums / flags
+        && (d.availableFrom == null || d.availableFrom is string)
+        && (d.furnished == null || d.furnished in ['unfurnished','semi','full'])
+        && (d.gated == null || d.gated is bool)
+        && (d.petFriendly == null || d.petFriendly is bool)
+        && (d.maintenanceIncluded == null || d.maintenanceIncluded is bool)
+        // required enums
+        && d.occupantType in ['family','bachelors','any']
+        && d.prefFood in ['veg','any']
+        && d.prefGender in ['male','female','any']
+        // text
+        && d.locality is string && d.locality.size() > 0 && d.locality.size() <= 80
+        && d.society is string && d.society.size() <= 80
+        && d.feedback is string && d.feedback.size() <= 500
+        // images
+        && d.imageUrls is list && d.imageUrls.size() <= 5
+        // timestamps
+        && d.createdAt is timestamp
+        && d.updatedAt is timestamp;
+    }
+
+    match /pins/{pinId} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && validPin(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && validPin(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // --- ratings: one per user per pin; doc id = pinId_uid ---
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && ratingId == request.resource.data.pinId + '_' + request.auth.uid
+        && request.resource.data.keys().hasOnly(['pinId','uid','rating','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.pinId is string
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.createdAt is timestamp;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // --- reports: one per user per pin; doc id = pinId_uid; no updates ---
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && reportId == request.resource.data.pinId + '_' + request.auth.uid
+        && request.resource.data.keys().hasOnly(['pinId','uid','reason','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.pinId is string
+        && request.resource.data.reason in ['wrong_rent','not_available','fake','other']
+        && request.resource.data.createdAt is timestamp;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+  }
+}
