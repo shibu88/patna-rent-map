@@ -37,7 +37,7 @@ async function renderPins(map) {
 async function applyFilters() {
   if (!clusterer) return;
   const filtered = allPins.filter(matchesFilters);
-  const markers = await createPinMarkers(filtered, openDetail);
+  const markers = await createPinMarkers(filtered, openDetail, allPins);
   clusterer.clearMarkers();
   clusterer.addMarkers(markers);
   updateResultCount(filtered.length, allPins.length);

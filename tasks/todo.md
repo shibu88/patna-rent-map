@@ -112,7 +112,107 @@ Constraint found in `firestore.rules`: every pin must carry all field keys, and 
 - [ ] Manual browser pass of all four buttons (user).
 - [x] Review section updated.
 
+## Step 8 — "Add Your Flat" form redesign (button inputs, per screenshots)  ← PLAN (awaiting approval)
+
+Redesign the "List My Flat" bottom sheet to match the three screenshots: tap-button inputs
+instead of dropdowns, a maintenance toggle, red `*` on required fields and grey `(optional)`
+on the rest, same dark colour scheme (keep the green `--accent`, not the screenshot's purple).
+
+### Confirmed decisions
+- Keep **all** current fields (listing type, food/gender pref, available-from, society, locality) —
+  just restyle them. BHK buttons = **1,2,3,4,5+** (no 1RK). Furnishing = **3** buttons
+  (Furnished / Semi / Unfurnished). Contact = **phone required, email optional**.
+- Heading → **"Add Your Flat"**; footer = **Cancel** + primary **List My Flat** (saves on the same
+  page; no "Proceed →" step). Location (GPS / Pick on map) stays at the bottom as before.
+- Remove the **Pets allowed** row (field `petFriendly` still saved as `null`; no rules change for it).
+
+### New fields (not in the current data model)
+- `parking` (number of cars, **required** in the form), `phone` (string, **required**),
+  `email` (string, optional). "Never shown publicly" note under phone/email.
+
+### ⚠️ One decision for you — where phone/email are stored
+`pins` is **world-readable** (CLAUDE.md: "anyone can read pins"), so anything saved there is
+technically readable by anyone, which contradicts "never shown publicly".
+- **(A) Simple:** store `phone`/`email` on the pin. Easy, but they are public in Firestore reads.
+- **(B) Private (recommended):** store them in a separate `contacts/{autoId}` collection whose
+  rules allow signed-in create but **no public read**. Pins stay fully public; contacts stay private.
+  Slightly more code (second write + a rules block). Parking stays on the pin either way.
+
+**Please pick A or B when you approve.** The checklist below assumes **B**; if you choose A it gets simpler.
+
+### Tasks
+- [ ] `index.html` — rebuild `#flat-form` body: convert BHK, listing type, furnishing, gated,
+      "who lives here", food pref, gender pref, available-from, (and rooms-available) to button groups
+      backed by hidden inputs (keeps `FormData` working). Maintenance → a toggle switch. Add
+      Parking, Phone, Email inputs. Label each field with a red `*` or grey `(optional)` marker.
+      Remove the Pets row. Heading → "Add Your Flat"; footer → Cancel + "List My Flat".
+- [ ] `src/style.css` — `.btn-group` buttons (reuse the chip look: transparent → green when `.active`),
+      `.req` (red) / `.opt` (grey) label markers, a toggle-switch style, parking/contact hints.
+- [ ] `src/form.js` — wire button groups (click → set hidden input + `.active`, re-run conditional
+      logic for listing type / available-from); read maintenance from the toggle; read + validate
+      parking (≥0), phone (required), email (optional); require furnishing + gated; default
+      occupant/food/gender to `any` when unset. Submit button text → "List My Flat". Add Cancel.
+      Save `parking`/`phone`/`email` (phone/email via the chosen storage option).
+- [ ] `src/spot.js` — add `parking:null` (and, for option A, `phone:null`, `email:null`) to the pin
+      so it still matches the `hasOnly` rules.
+- [ ] `firestore.rules` — add `parking` (+ `phone`,`email` for option A) to the `hasOnly` key list and
+      add optional-value validators. (Option B adds a `contacts` match block instead.)
+- [ ] `src/config.js` — add any new constants (e.g. `PARKING_MAX`).
+- [ ] CLAUDE.md — add the new fields to the data-model table so the contract stays accurate.
+- [ ] `npm run build` compiles; **STOP** for your browser test.
+
+### Refinements from the 4th screenshot (confirmed)
+- Chosen storage: **B** (private `contacts` collection). Required marker = just a red `*` (no "(required)" text).
+- **Available from** → buttons **ASAP / Next month / Flexible** (default ASAP). Stored as
+  `'asap' | 'next_month' | 'flexible'`; `pins.js isAvailable()` + `detail.js availableText()` learn these.
+- **Preferred tenants (optional)** (was "Who lives here?") → **Family / Bachelors / No preference**
+  (default "No preference" = `occupantType:'any'`).
+- Parking hint shortened to "Enter 0 if there's no parking." Phone placeholder "10-digit mobile";
+  contact hint "Private — only shared with matched seekers."
+- **Email now shows a red `*` in the screenshot**, contradicting the earlier "email optional" choice.
+  Following the newest screenshot: **email required** (flagged to the user to flip if unintended).
+- Footer submit label "List My Flat", kept green (our `--accent`), not the screenshot's purple.
+- Fields with a built-in default (available-from, preferred tenants, food, gender, maintenance toggle)
+  carry no `*`; truly-required picks (BHK, furnishing, gated) start with nothing selected.
+
+Notes: `detail.js` gains an availability-label update and a "Parking" row (public info); phone/email are
+never shown (they live in the private `contacts` collection). The `firebase deploy --only firestore:rules`
+for the rules change is yours to run.
+
 ## Review
+
+### Step 8 — "Add Your Flat" form redesign (code done, build clean; awaiting browser test)
+- **`index.html`**: rebuilt the `#flat-form` body. Dropdowns → tap **button groups** (BHK, listing
+  type, rooms-available, furnishing, gated, available-from, preferred tenants, food, gender), each
+  backed by a hidden `<input>` so `FormData` is unchanged. Added a **maintenance toggle** switch,
+  **Parking** (₹-style unit suffix "cars"), **Email** and **Phone** inputs, a ₹ prefix on rent and a
+  "sq.ft" suffix on area. Removed the **Pets** row and the old date picker. Every label now shows a
+  red `*` (`.req`) or grey `(optional)` (`.opt`). Heading → "Add Your Flat"; footer → **Cancel** +
+  **List My Flat**.
+- **`src/form.js`**: `setupButtonGroups()` wires clicks → hidden input + `.active` highlight (and
+  re-runs the room/flatmate conditional for listing type); maintenance read from the toggle;
+  validation for BHK, furnishing, gated, parking (≥0), locality, email (regex), phone (≥10 digits);
+  defaults occupant/food/gender to `any`. On save it writes the pin, then best-effort writes
+  phone/email to the private **`contacts`** collection. Submit label "List My Flat"; `resetForm`
+  restores each button group's highlight.
+- **`src/spot.js`**: added `parking: null` so To-Let pins still match the `hasOnly` rules.
+- **`src/pins.js` / `src/detail.js`**: `isAvailable()` + `availableText()` learn `next_month` /
+  `flexible`; detail panel gained a **Parking** row (phone/email are never shown).
+- **`firestore.rules`**: `parking` added to the pins schema + validator (0–20); new **`contacts`**
+  block — signed-in create with validation, owner-only read, no update/delete, **not public**.
+- **`src/config.js`**: `PARKING_MAX`, `AVAILABLE_FROM_OPTIONS`. **CLAUDE.md**: data model updated
+  (`parking`, new `availableFrom` values, `contacts` collection, pets note).
+- `npm run build` compiles clean.
+
+**Two things to know before testing:**
+1. **Email and phone are both required** (confirmed), and both are stored only in the private
+   `contacts` collection — never in `pins`, so they are never public or shown on the map.
+2. The private `contacts` write only succeeds once you **deploy the updated rules**
+   (`firebase deploy --only firestore:rules`). Until then the pin still saves fine; the contact write
+   is best-effort and just logs a warning. **STOP here for your browser test.**
+
+### Earlier review notes
+
 
 ### Change — top/filter bar now centered + transparent (floats over the map)
 - Request: make the filter bar centred and transparent like the reference (bengaluru.rent).

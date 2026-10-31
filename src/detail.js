@@ -35,6 +35,8 @@ function row(label, value) {
 
 function availableText(pin) {
   if (pin.availableFrom === 'asap') return 'Available now';
+  if (pin.availableFrom === 'next_month') return 'From next month';
+  if (pin.availableFrom === 'flexible') return 'Flexible';
   if (!pin.availableFrom) return 'Occupied / not available';
   return `From ${esc(pin.availableFrom)}`;
 }
@@ -72,6 +74,7 @@ export function showDetail(pin, opts = {}) {
   }
   html += row('Deposit', pin.depositMonths ? `${pin.depositMonths} month(s)` : null);
   html += row('Area', pin.sqft ? `${pin.sqft} sqft` : null);
+  html += row('Parking', pin.parking == null ? null : pin.parking === 0 ? 'None' : `${pin.parking} car(s)`);
   html += row('Availability', availableText(pin));
   html += row('Furnished', FURNISHED_LABELS[pin.furnished]);
   html += row('Gated', pin.gated === true ? 'Yes' : pin.gated === false ? 'No' : null);

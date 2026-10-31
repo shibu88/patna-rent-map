@@ -10,7 +10,7 @@ service cloud.firestore {
     function validPin(d) {
       return d.keys().hasOnly([
           'lat','lng','pinKind','listingType','bhk','rentAmount','rentPerRoom',
-          'roomsAvailable','depositMonths','sqft','availableFrom','furnished',
+          'roomsAvailable','depositMonths','sqft','parking','availableFrom','furnished',
           'gated','petFriendly','maintenanceIncluded','occupantType','prefFood',
           'prefGender','locality','society','feedback','imageUrls','ownerUid',
           'createdAt','updatedAt'
@@ -29,6 +29,7 @@ service cloud.firestore {
         && (d.roomsAvailable == null || (d.roomsAvailable is number && d.roomsAvailable >= 1 && d.roomsAvailable <= 9))
         && (d.depositMonths == null || (d.depositMonths is number && d.depositMonths >= 0 && d.depositMonths <= 24))
         && (d.sqft == null || (d.sqft is number && d.sqft >= 0 && d.sqft <= 20000))
+        && (d.parking == null || (d.parking is number && d.parking >= 0 && d.parking <= 20))
         // optional enums / flags
         && (d.availableFrom == null || d.availableFrom is string)
         && (d.furnished == null || d.furnished in ['unfurnished','semi','full'])
@@ -68,6 +69,20 @@ service cloud.firestore {
 
       allow delete: if request.auth != null
         && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // --- contacts: private phone/email for a pin. NOT publicly readable; only the
+    // owner can read their own. Collected by the "Add Your Flat" form. ---
+    match /contacts/{contactId} {
+      allow read: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['pinId','phone','email','ownerUid','createdAt'])
+        && request.resource.data.pinId is string && request.resource.data.pinId.size() > 0
+        && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() <= 20
+        && request.resource.data.email is string && request.resource.data.email.size() <= 120
+        && request.resource.data.createdAt is timestamp;
+      allow update, delete: if false;
     }
 
     // --- ratings: one per user per pin; doc id = pinId_uid ---

@@ -67,11 +67,12 @@ export function bhkLabel(bhk) {
   return bhk === '1RK' ? '1RK' : `${bhk}BHK`;
 }
 
-// Available = marked ASAP, or a date that is today or later. null = occupied.
+// Available = ASAP / next month / flexible, or a date that is today or later.
+// null = occupied / not available.
 export function isAvailable(pin) {
   const a = pin.availableFrom;
   if (!a) return false;
-  if (a === 'asap') return true;
+  if (a === 'asap' || a === 'next_month' || a === 'flexible') return true;
   const t = Date.parse(a);
   return !Number.isNaN(t) && t >= Date.now() - 86400000;
 }
@@ -144,11 +145,12 @@ async function getMarkerLib() {
   return markerLib || (markerLib = await google.maps.importLibrary('marker'));
 }
 
-export async function createPinMarkers(pins, onClick) {
+export async function createPinMarkers(pins, onClick, allPins = pins) {
   const { AdvancedMarkerElement } = await getMarkerLib();
   return pins.map((pin) => {
-    // Wrapper is a map-pin: the label sits on top, a tail points down so its
-    // tip (the marker's bottom-centre anchor) lands on the exact coordinate.
+    // Wrapper is a map-pin: an optional "Above avg" chip and the label sit on
+    // top, a tail points down so its tip (the marker's bottom-centre anchor)
+    // lands on the exact coordinate.
     const el = document.createElement('div');
     el.className = 'pin-marker';
     el.style.setProperty('--pin-color', PIN_KIND_COLORS[pin.pinKind] || PIN_KIND_COLORS.rent);
@@ -156,7 +158,9 @@ export async function createPinMarkers(pins, onClick) {
     let inner = `<span class="pin-main">${bhkLabel(pin.bhk)} · ₹${formatRent(pin.rentAmount)}</span>`;
     if (pin.ratingCount) inner += `<span class="pin-star">★ ${pin.avgRating.toFixed(1)}</span>`;
     if (pin.reportCount) inner += `<span class="pin-reports">${pin.reportCount}</span>`;
-    el.innerHTML = `<div class="pin-label">${inner}</div>`;
+
+    const chip = isAboveAvg(pin, allPins) ? `<div class="pin-above">⚠ Above avg</div>` : '';
+    el.innerHTML = chip + `<div class="pin-label">${inner}</div>`;
 
     const marker = new AdvancedMarkerElement({
       position: { lat: pin.lat, lng: pin.lng },

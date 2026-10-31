@@ -42,9 +42,10 @@ A crowdsourced map of flat rents in Patna. Tenants and owners pin what a flat re
 | rentPerRoom | number \| null | for room/flatmate |
 | depositMonths | number \| null | |
 | sqft | number \| null | |
-| availableFrom | "asap" \| ISO date \| null | null = occupied, not available |
+| parking | number \| null | car spots (0 = none); 0–20 |
+| availableFrom | "asap" \| "next_month" \| "flexible" \| ISO date \| null | null = occupied, not available |
 | furnished | "unfurnished" \| "semi" \| "full" \| null | |
-| gated, petFriendly, maintenanceIncluded | boolean \| null | |
+| gated, petFriendly, maintenanceIncluded | boolean \| null | petFriendly kept in model; no UI (Pets row removed) |
 | occupantType | "family" \| "bachelors" \| "any" | |
 | prefFood | "veg" \| "any" | |
 | prefGender | "male" \| "female" \| "any" | |
@@ -58,6 +59,9 @@ A crowdsourced map of flat rents in Patna. Tenants and owners pin what a flat re
 
 ### `reports/{pinId}_{uid}`
 `{ pinId, uid, reason ("wrong_rent" | "not_available" | "fake" | "other"), createdAt }`. Doc id prevents double reports.
+
+### `contacts/{autoId}`
+`{ pinId, phone, email, ownerUid, createdAt }`. Private lister contact details collected by the "Add Your Flat" form. **Not publicly readable** — only the owner can read their own; never shown on the map. Kept separate from `pins` (which is world-readable) so phone/email stay private.
 
 ## Architecture
 
@@ -75,6 +79,7 @@ A crowdsourced map of flat rents in Patna. Tenants and owners pin what a flat re
 - Create requires `request.auth != null`; `ownerUid` must equal `request.auth.uid`; validate types, enums, rent range (500–500000), feedback length, and that lat/lng fall within a Patna bounding box.
 - Update/delete a pin only by its owner.
 - `ratings` and `reports` doc id must equal `pinId + "_" + request.auth.uid`; no updates to reports.
+- `contacts` is **not** publicly readable: read only by the owner (`ownerUid == uid`); signed-in create with validation; no update/delete.
 
 ## Build order (do one step at a time; stop and let me test each)
 

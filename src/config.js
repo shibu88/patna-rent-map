@@ -22,6 +22,7 @@ export const LAT_LNG_DECIMALS = 3; // round to ~100 m before saving
 export const RENT_MIN = 500;
 export const RENT_MAX = 500000;
 export const FEEDBACK_MAX = 500;
+export const PARKING_MAX = 20; // max car spots the form/rules accept
 
 // --- Images ---
 export const MAX_IMAGES = 5;
@@ -44,6 +45,7 @@ export const PIN_KINDS = ['rent', 'tolet'];
 export const LISTING_TYPES = ['whole_flat', 'room', 'flatmate'];
 export const BHK_OPTIONS = ['1RK', '1', '2', '3', '4', '5+'];
 export const FURNISHED_OPTIONS = ['unfurnished', 'semi', 'full'];
+export const AVAILABLE_FROM_OPTIONS = ['asap', 'next_month', 'flexible'];
 export const OCCUPANT_TYPES = ['family', 'bachelors', 'any'];
 export const FOOD_PREFS = ['veg', 'any'];
 export const GENDER_PREFS = ['male', 'female', 'any'];

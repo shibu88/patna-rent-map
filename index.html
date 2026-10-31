@@ -178,130 +178,186 @@
       <div id="form-overlay" hidden>
         <form id="flat-form" novalidate>
           <div class="sheet-head">
-            <h2>List My Flat</h2>
+            <h2>Add Your Flat</h2>
             <button id="form-close" type="button" aria-label="Close">×</button>
           </div>
 
           <div class="sheet-body">
-            <label>Listing type
-              <select name="listingType" required>
-                <option value="whole_flat">Whole flat</option>
-                <option value="room">Room</option>
-                <option value="flatmate">Flatmate</option>
-              </select>
-            </label>
+            <!-- Bedrooms (BHK) -->
+            <div class="field">
+              <span class="field-label">Bedrooms (BHK) <span class="req">*</span></span>
+              <input type="hidden" name="bhk" value="" />
+              <div class="btn-group" data-group="bhk">
+                <button type="button" data-value="1">1</button>
+                <button type="button" data-value="2">2</button>
+                <button type="button" data-value="3">3</button>
+                <button type="button" data-value="4">4</button>
+                <button type="button" data-value="5+">5+</button>
+              </div>
+            </div>
 
-            <label>BHK
-              <select name="bhk" required>
-                <option value="1RK">1 RK</option>
-                <option value="1">1 BHK</option>
-                <option value="2" selected>2 BHK</option>
-                <option value="3">3 BHK</option>
-                <option value="4">4 BHK</option>
-                <option value="5+">5+ BHK</option>
-              </select>
-            </label>
+            <!-- Listing type -->
+            <div class="field">
+              <span class="field-label">Listing type <span class="req">*</span></span>
+              <input type="hidden" name="listingType" value="whole_flat" />
+              <div class="btn-group" data-group="listingType">
+                <button type="button" data-value="whole_flat" class="active">Whole flat</button>
+                <button type="button" data-value="room">Room</button>
+                <button type="button" data-value="flatmate">Flatmate</button>
+              </div>
+            </div>
 
-            <label>Monthly rent (₹)
-              <input name="rentAmount" type="number" inputmode="numeric" min="500" max="500000" step="500" required placeholder="e.g. 12000" />
-            </label>
-
-            <label data-when-room hidden>Rooms available
-              <select name="roomsAvailable">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-              </select>
-            </label>
-
-            <label data-when-room hidden>Rent per room (₹, optional)
+            <!-- Rooms available (room / flatmate only) -->
+            <div class="field" data-when-room hidden>
+              <span class="field-label">Rooms available <span class="opt">(optional)</span></span>
+              <input type="hidden" name="roomsAvailable" value="1" />
+              <div class="btn-group" data-group="roomsAvailable">
+                <button type="button" data-value="1" class="active">1</button>
+                <button type="button" data-value="2">2</button>
+                <button type="button" data-value="3">3</button>
+                <button type="button" data-value="4">4</button>
+                <button type="button" data-value="5">5</button>
+                <button type="button" data-value="6">6</button>
+                <button type="button" data-value="7">7</button>
+                <button type="button" data-value="8">8</button>
+                <button type="button" data-value="9">9</button>
+              </div>
+            </div>
+            <label data-when-room hidden>Rent per room (₹) <span class="opt">(optional)</span>
               <input name="rentPerRoom" type="number" inputmode="numeric" min="500" max="500000" step="500" placeholder="for room / flatmate" />
             </label>
 
+            <!-- Monthly rent -->
+            <label>Monthly Rent (₹) <span class="req">*</span>
+              <span class="input-wrap"><span class="prefix">₹</span>
+                <input name="rentAmount" class="has-prefix" type="number" inputmode="numeric" min="500" max="500000" step="500" required placeholder="e.g. 25000" />
+              </span>
+            </label>
+
+            <!-- Furnishing -->
+            <div class="field">
+              <span class="field-label">Furnishing <span class="req">*</span></span>
+              <input type="hidden" name="furnished" value="" />
+              <div class="btn-group" data-group="furnished">
+                <button type="button" data-value="full">🛋 Furnished</button>
+                <button type="button" data-value="semi">🪑 Semi</button>
+                <button type="button" data-value="unfurnished">📦 Unfurnished</button>
+              </div>
+            </div>
+
+            <!-- Includes maintenance (toggle) -->
+            <div class="field toggle-row">
+              <div>
+                <span class="field-label">Includes Maintenance</span>
+                <span class="hint">Is maintenance bundled in rent?</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="maintenanceIncluded" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Gated society -->
+            <div class="field">
+              <span class="field-label">Gated Society <span class="req">*</span></span>
+              <input type="hidden" name="gated" value="" />
+              <div class="btn-group" data-group="gated">
+                <button type="button" data-value="true">🏙 Gated</button>
+                <button type="button" data-value="false">🏘 Not Gated</button>
+              </div>
+            </div>
+
+            <!-- Available from -->
+            <div class="field">
+              <span class="field-label">Available from</span>
+              <input type="hidden" name="availableFrom" value="asap" />
+              <div class="btn-group" data-group="availableFrom">
+                <button type="button" data-value="asap" class="active">ASAP</button>
+                <button type="button" data-value="next_month">Next month</button>
+                <button type="button" data-value="flexible">Flexible</button>
+              </div>
+            </div>
+
+            <!-- Preferred tenants -->
+            <div class="field">
+              <span class="field-label">Preferred tenants <span class="opt">(optional)</span></span>
+              <input type="hidden" name="occupantType" value="any" />
+              <div class="btn-group" data-group="occupantType">
+                <button type="button" data-value="family">👪 Family</button>
+                <button type="button" data-value="bachelors">🧑 Bachelors</button>
+                <button type="button" data-value="any" class="active">No preference</button>
+              </div>
+            </div>
+
+            <!-- Food preference -->
+            <div class="field">
+              <span class="field-label">Food preference <span class="opt">(optional)</span></span>
+              <input type="hidden" name="prefFood" value="any" />
+              <div class="btn-group" data-group="prefFood">
+                <button type="button" data-value="any" class="active">No preference</button>
+                <button type="button" data-value="veg">Veg only</button>
+              </div>
+            </div>
+
+            <!-- Gender preference -->
+            <div class="field">
+              <span class="field-label">Gender preference <span class="opt">(optional)</span></span>
+              <input type="hidden" name="prefGender" value="any" />
+              <div class="btn-group" data-group="prefGender">
+                <button type="button" data-value="any" class="active">No preference</button>
+                <button type="button" data-value="male">Male</button>
+                <button type="button" data-value="female">Female</button>
+              </div>
+            </div>
+
+            <!-- Deposit + square footage -->
             <div class="row">
-              <label>Deposit (months)
+              <label>Deposit paid (months) <span class="opt">(optional)</span>
                 <input name="depositMonths" type="number" inputmode="numeric" min="0" max="24" step="1" placeholder="e.g. 2" />
               </label>
-              <label>Area (sqft)
-                <input name="sqft" type="number" inputmode="numeric" min="50" max="20000" step="10" placeholder="optional" />
+              <label>Square Footage <span class="opt">(optional)</span>
+                <span class="input-wrap">
+                  <input name="sqft" type="number" inputmode="numeric" min="50" max="20000" step="10" placeholder="e.g. 850" />
+                  <span class="suffix">sq.ft</span>
+                </span>
               </label>
             </div>
 
-            <label>Available from
-              <select name="availableKind">
-                <option value="asap">Available now</option>
-                <option value="date">On a date…</option>
-                <option value="none">Occupied / not available</option>
-              </select>
-            </label>
-            <label data-when-date hidden>Date
-              <input name="availableDate" type="date" />
+            <!-- Parking -->
+            <label>🚗 Parking for <span class="req">*</span>
+              <span class="input-wrap">
+                <input name="parking" type="number" inputmode="numeric" min="0" max="20" step="1" required placeholder="e.g. 1" />
+                <span class="suffix">cars</span>
+              </span>
+              <span class="hint">Enter 0 if there's no parking.</span>
             </label>
 
-            <label>Furnished
-              <select name="furnished">
-                <option value="">Not specified</option>
-                <option value="unfurnished">Unfurnished</option>
-                <option value="semi">Semi-furnished</option>
-                <option value="full">Fully furnished</option>
-              </select>
-            </label>
-
-            <div class="row">
-              <label>Gated
-                <select name="gated"><option value="">—</option><option value="true">Yes</option><option value="false">No</option></select>
-              </label>
-              <label>Pet friendly
-                <select name="petFriendly"><option value="">—</option><option value="true">Yes</option><option value="false">No</option></select>
-              </label>
-            </div>
-            <label>Maintenance included
-              <select name="maintenanceIncluded"><option value="">—</option><option value="true">Yes</option><option value="false">No</option></select>
-            </label>
-
-            <label>Occupant type
-              <select name="occupantType" required>
-                <option value="any">Any</option>
-                <option value="family">Family</option>
-                <option value="bachelors">Bachelors</option>
-              </select>
-            </label>
-            <div class="row">
-              <label>Food preference
-                <select name="prefFood" required>
-                  <option value="any">Any</option>
-                  <option value="veg">Veg only</option>
-                </select>
-              </label>
-              <label>Gender preference
-                <select name="prefGender" required>
-                  <option value="any">Any</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </label>
-            </div>
-
-            <label>Locality
+            <!-- Locality + society -->
+            <label>Locality <span class="req">*</span>
               <input name="locality" type="text" maxlength="80" required placeholder="e.g. Kankarbagh" />
             </label>
-            <label>Society / building (optional)
+            <label>Society / building <span class="opt">(optional)</span>
               <input name="society" type="text" maxlength="80" placeholder="e.g. Shivpuri Apartments" />
             </label>
 
-            <label>Short feedback (optional)
-              <textarea name="feedback" rows="2" maxlength="500" placeholder="anything useful for others"></textarea>
+            <!-- One-liner -->
+            <label>One-liner on the stay <span class="opt">(optional)</span>
+              <input name="feedback" type="text" maxlength="500" placeholder="e.g. Great locality, noisy at night" />
               <span class="hint" id="feedback-count">0 / 500</span>
             </label>
 
+            <!-- Contact (stored privately, never shown on the map) -->
+            <label>Your email <span class="req">*</span>
+              <input name="email" type="email" maxlength="120" required placeholder="you@gmail.com" />
+            </label>
+            <label>Phone number <span class="req">*</span>
+              <input name="phone" type="tel" inputmode="numeric" maxlength="20" required placeholder="10-digit mobile" />
+              <span class="hint">Private — only shared with matched seekers.</span>
+            </label>
+
+            <!-- Location -->
             <fieldset class="loc">
-              <legend>Location</legend>
+              <legend>Location <span class="req">*</span></legend>
               <div class="loc-btns">
                 <button id="use-gps" type="button">📍 Use GPS</button>
                 <button id="pick-map" type="button">🗺️ Pick on map</button>
@@ -312,8 +368,9 @@
             <p class="form-err" id="form-err" hidden></p>
           </div>
 
-          <div class="sheet-foot">
-            <button id="form-submit" type="submit">Save pin</button>
+          <div class="sheet-foot form-foot">
+            <button id="form-cancel" type="button">Cancel</button>
+            <button id="form-submit" type="submit">List My Flat</button>
           </div>
         </form>
       </div>

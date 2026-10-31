@@ -135,6 +135,7 @@ async function onSubmit(e) {
     roomsAvailable: null,
     depositMonths: null,
     sqft: null,
+    parking: null,
     availableFrom: 'asap',
     furnished: null,
     gated: null,
