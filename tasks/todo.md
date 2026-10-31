@@ -437,3 +437,10 @@ card is intentionally omitted (needs Cloud Functions, unavailable on Spark).
 - Root cause (code): id/class `display` rules overrode the HTML `hidden` attribute, so `#form-overlay` and conditional labels ignored `hidden`. The sheet never closed → "Pick on map" couldn't close it → no location could be set → save blocked. Fixed with one rule: `[hidden] { display: none !important; }`.
 - Verified in Chrome: form hidden on load; Pick-on-map closes sheet; dropping a pin set `25.586, 85.143 (rounded)`; conditional fields hide.
 - Second cause (config, user action): with the code fixed, the write reaches Firebase and anon sign-in works, but Firestore returns `Missing or insufficient permissions` — the DB is in locked mode. User must set temporary signed-in-write rules until Step 6 deploys the real rules.
+
+### Bugfix — detail panel showed "Not for rent" for available flats
+- Symptom: a flat added via "Add Your Flat" with availability "asap" showed a center card reading "Not for rent — they're not renting it out."
+- Root cause: `contextCardHtml()` in `src/detail.js` rendered the "Not for rent" transparency card for every `pinKind: 'rent'` pin (the form hardcodes `pinKind: 'rent'`), ignoring `availableFrom`.
+- Fix (`src/detail.js`): the rent branch now reads `availableFrom`. A set value shows "📍 <availability>" (e.g. "Available now") + "This flat is listed as available to rent." A null value shows "📍 Not currently available" + the "See flats currently available →" link.
+- Contact details intentionally not promised in the card (they live in the private `contacts` collection, never public).
+- `npm run build` passes. Awaiting browser test.

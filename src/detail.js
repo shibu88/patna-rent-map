@@ -88,11 +88,19 @@ function contextCardHtml(pin) {
       <p class="d-card-text">Spotted on a To-Let board — contact details may be on the board at the location.</p>
     </div>`;
   }
-  // pinKind 'rent' = someone shared what they pay, for transparency.
+  // pinKind 'rent' = a flat someone added via "Add Your Flat". Drive the card
+  // off availability: a set availableFrom means it's listed as available;
+  // null means the lister marked it occupied / not available.
+  if (!pin.availableFrom) {
+    return `<div class="d-card">
+      <div class="d-card-title">📍 Not currently available</div>
+      <p class="d-card-text">The lister marked this flat as occupied / not available right now.</p>
+      <button type="button" class="d-link" id="d-see-available">See flats currently available →</button>
+    </div>`;
+  }
   return `<div class="d-card">
-    <div class="d-card-title">📍 Not for rent</div>
-    <p class="d-card-text">This person pinned their rent for transparency — they're not renting it out.</p>
-    <button type="button" class="d-link" id="d-see-available">See flats currently available →</button>
+    <div class="d-card-title">📍 ${esc(availabilityText(pin))}</div>
+    <p class="d-card-text">This flat is listed as available to rent.</p>
   </div>`;
 }
 
