@@ -179,6 +179,43 @@ Notes: `detail.js` gains an availability-label update and a "Parking" row (publi
 never shown (they live in the private `contacts` collection). The `firebase deploy --only firestore:rules`
 for the rules change is yours to run.
 
+## Step 9 — Pin detail panel redesign + comments  ← PLAN (awaiting approval)
+
+Rebuild the marker-click detail panel to match the two screenshots, rendering **only real stored
+pin data** (nothing hardcoded). Confirmed: **skip** the email-alert card; **build** real comments;
+**match the screenshots exactly** (no locality / parking / food-gender / listing-type shown).
+
+### Layout (top → bottom)
+- Header: small "MONTHLY RENT" label + big **₹amount**; top-right icon buttons **share · report (flag) · close**.
+- **Chips** (coloured dot + text), each only if the field has a value:
+  `N BHK` · furnishing · `Maintenance Incl./Extra` (from `maintenanceIncluded`) · `Gated Society`/`Not Gated` ·
+  tenants (`Family`/`Bachelors`, from `occupantType`; hidden when `any`) · `N mo deposit`.
+- **Meta row** (icon + muted text): `Society: <society>` · `<sqft> sq.ft` · `Pinned <N>d ago` (from `createdAt`).
+- **Get directions** → Google Maps directions link to the pin's lat/lng.
+- **Context card**: for `pinKind:'rent'` → the "Not for rent — pinned for transparency" card with a
+  "See flats currently available →" link (closes panel + turns on the To-Let filter). For
+  `pinKind:'tolet'` → a short availability card from `availableFrom`.
+- **Community rating**: "No ratings yet — tap to rate ›" or "★ x.x (n)"; tapping reveals the existing
+  1–5 star control. (Report reasons move behind the top flag icon.)
+- **Comments**: list of stored comments (newest first, "Nd ago") + an input and **Post** button.
+
+### Tasks
+- [ ] `src/pins.js` — `addComment(pinId, text)` + `loadComments(pinId)` (query by `pinId`, sort
+      client-side by `createdAt` desc → no composite index). Import `addDoc`, `query`, `where`.
+- [ ] `src/detail.js` — rewrite `showDetail()` for the layout above; add a `timeAgo()` helper; wire
+      share (Web Share API / copy link), directions, the flag→report toggle, star rating, and comment post.
+- [ ] `index.html` — simplify the `#detail-sheet` to a single scroll container the panel fills
+      (header/close/share/report render inside it).
+- [ ] `src/style.css` — detail-panel styles: chips with coloured dots, meta row, cards, rating row,
+      comments list + composer. Keep the dark **green** scheme (not the screenshot's purple).
+- [ ] `src/main.js` — `openDetail` loads comments and passes `onComment`; re-render the list after a post.
+- [ ] `firestore.rules` — new `comments` block: public read; signed-in create (pinId string, uid ==
+      auth.uid, text 1–500 chars, server `createdAt`); no update; owner delete. **Deploy is yours to run.**
+- [ ] `npm run build` compiles; **STOP** for your browser test.
+
+Notes: comments are a new `comments/{autoId}` collection (added to CLAUDE.md data model). The email-alert
+card is intentionally omitted (needs Cloud Functions, unavailable on Spark).
+
 ## Review
 
 ### Step 8 — "Add Your Flat" form redesign (code done, build clean; awaiting browser test)
@@ -210,6 +247,30 @@ for the rules change is yours to run.
 2. The private `contacts` write only succeeds once you **deploy the updated rules**
    (`firebase deploy --only firestore:rules`). Until then the pin still saves fine; the contact write
    is best-effort and just logs a warning. **STOP here for your browser test.**
+
+### Step 9 — Pin detail panel redesign + comments (code done, build clean)
+- **`src/detail.js`** rewritten to match the screenshots: MONTHLY RENT header + big ₹amount with
+  share / report / close icon buttons; coloured info chips (BHK, furnishing, Maintenance Incl./Extra,
+  Gated, tenants, deposit — each only when the field has a value); meta row (Society · sqft · "Pinned
+  Nd ago"); Get directions; a context card ("Not for rent" for `rent` pins, availability for `tolet`);
+  community rating (tap-to-rate reveals the stars); and a comments thread. Added `timeAgo()`; wired
+  share (Web Share / clipboard), directions, flag→report toggle, rating, and comment post.
+- **`src/pins.js`**: `loadComments(pinId)` (query by pinId, sort newest-first client-side — no index)
+  and `addComment(pinId, text)`.
+- **`src/main.js`**: `openDetail` loads rating + comments independently (`Promise.allSettled`, so a
+  denied comments read doesn't wipe the rating); `handleComment` posts then re-opens the panel;
+  "See flats currently available" calls `applyToLetFilter()`.
+- **`src/filters.js`**: `applyToLetFilter()` — select To-Let only + open the panel.
+- **Map-click fix**: tapping the map now closes the open Filters panel (`main.js`).
+- **`index.html`**: `#detail-sheet` simplified to a single scroll container the panel fills.
+- **`src/style.css`**: replaced the old detail styles with the new panel (chips, meta, cards, rating,
+  comments); detail sheet is now a **floating rounded card** with a transparent dark-blue glass
+  background + blur.
+- **`firestore.rules`**: new `comments` block (public read; signed-in create with validation; no
+  update; author delete). **`.claude/claude.md`**: documented the `comments` collection + rule.
+- Email-alert card intentionally omitted (needs Cloud Functions, unavailable on Spark).
+- `npm run build` compiles clean. Reminder: run `firebase deploy --only firestore:rules` so comments
+  read/write works.
 
 ### Earlier review notes
 

@@ -112,6 +112,17 @@ function resetFilters() {
   onChange();
 }
 
+// Called from the detail panel's "See flats currently available" link: show only
+// spotted To-Let pins (the ones actually up for rent) and reveal the filter panel.
+export function applyToLetFilter() {
+  state.pinKind = new Set(['tolet']);
+  document
+    .querySelectorAll('#kind-chips button')
+    .forEach((b) => b.classList.toggle('active', b.dataset.kind === 'tolet'));
+  $('#filter-panel').hidden = false;
+  onChange();
+}
+
 export function matchesFilters(pin) {
   if (state.bhk.size && !state.bhk.has(pin.bhk)) return false;
   if (state.pinKind.size && !state.pinKind.has(pin.pinKind)) return false;

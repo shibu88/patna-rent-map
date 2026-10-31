@@ -85,6 +85,20 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // --- comments: public thread on a pin; anyone signed-in can post ---
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['pinId','uid','text','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.pinId is string && request.resource.data.pinId.size() > 0
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
     // --- ratings: one per user per pin; doc id = pinId_uid ---
     match /ratings/{ratingId} {
       allow read: if true;

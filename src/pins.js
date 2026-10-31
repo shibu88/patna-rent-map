@@ -1,6 +1,16 @@
 // Load all pins/ratings/reports once and join them in the browser,
 // then build custom Advanced Markers.
-import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  setDoc,
+  addDoc,
+  query,
+  where,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { db, ensureSignedIn } from './firebase.js';
 import {
   HIDE_REPORT_THRESHOLD,
@@ -94,6 +104,26 @@ export async function reportPin(pinId, reason) {
     pinId,
     uid: user.uid,
     reason,
+    createdAt: serverTimestamp(),
+  });
+}
+
+// --- Comments (one collection; newest-first, sorted client-side so no index) ---
+export async function loadComments(pinId) {
+  const snap = await getDocs(query(collection(db, 'comments'), where('pinId', '==', pinId)));
+  const list = [];
+  snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+  // Newest first. createdAt may be a Firestore Timestamp (toMillis) or null while pending.
+  const ms = (c) => (c.createdAt && c.createdAt.toMillis ? c.createdAt.toMillis() : 0);
+  return list.sort((a, b) => ms(b) - ms(a));
+}
+
+export async function addComment(pinId, text) {
+  const user = await ensureSignedIn();
+  await addDoc(collection(db, 'comments'), {
+    pinId,
+    uid: user.uid,
+    text,
     createdAt: serverTimestamp(),
   });
 }

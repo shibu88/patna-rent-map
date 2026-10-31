@@ -115,14 +115,10 @@
       <!-- Floating action button to open the listing form -->
       <button id="list-flat-btn" type="button">+ List My Flat</button>
 
-      <!-- Pin detail panel (bottom sheet) -->
+      <!-- Pin detail panel (bottom sheet) — fully rendered by detail.js -->
       <div id="detail-overlay" hidden>
         <div id="detail-sheet">
-          <div class="sheet-head">
-            <h2 id="detail-title">Flat</h2>
-            <button id="detail-close" type="button" aria-label="Close">×</button>
-          </div>
-          <div class="sheet-body" id="detail-body"><!-- filled by detail.js --></div>
+          <div id="detail-body"><!-- filled by detail.js --></div>
         </div>
       </div>
 
@@ -269,7 +265,7 @@
 
             <!-- Available from -->
             <div class="field">
-              <span class="field-label">Available from</span>
+              <span class="field-label">Available from <span class="opt">(optional)</span></span>
               <input type="hidden" name="availableFrom" value="asap" />
               <div class="btn-group" data-group="availableFrom">
                 <button type="button" data-value="asap" class="active">ASAP</button>

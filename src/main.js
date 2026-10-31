@@ -13,10 +13,12 @@ import {
   getUserInteraction,
   ratePin,
   reportPin,
+  loadComments,
+  addComment,
 } from './pins.js';
 import { clusterPins } from './cluster.js';
 import { setupDetail, showDetail, hideDetail } from './detail.js';
-import { setupFilters, matchesFilters } from './filters.js';
+import { setupFilters, matchesFilters, applyToLetFilter } from './filters.js';
 import { isFirebaseConfigured } from './firebase.js';
 
 let allPins = [];
@@ -52,17 +54,41 @@ async function reloadPins() {
 async function openDetail(pin) {
   const aboveAvg = isAboveAvg(pin, allPins);
   let userInteraction = { rating: null, reported: null };
-  try {
-    userInteraction = await getUserInteraction(pin.id);
-  } catch (err) {
-    console.error('Could not read your previous rating/report:', err);
-  }
+  let comments = [];
+  // Independent reads: a denied comments read (e.g. before the rules deploy) must
+  // not wipe the user's rating/report, and vice versa.
+  const [uiRes, cRes] = await Promise.allSettled([
+    getUserInteraction(pin.id),
+    loadComments(pin.id),
+  ]);
+  if (uiRes.status === 'fulfilled') userInteraction = uiRes.value;
+  else console.error('Could not read your rating/report:', uiRes.reason);
+  if (cRes.status === 'fulfilled') comments = cRes.value;
+  else console.error('Could not read comments:', cRes.reason);
   showDetail(pin, {
     aboveAvg,
     userInteraction,
+    comments,
     onRate: (rating) => handleRate(pin, rating),
     onReport: (reason) => handleReport(pin, reason),
+    onComment: (text) => handleComment(pin, text),
+    onSeeAvailable: () => {
+      hideDetail();
+      applyToLetFilter();
+    },
   });
+}
+
+async function handleComment(pin, text) {
+  try {
+    await addComment(pin.id, text);
+  } catch (err) {
+    console.error(err);
+    alert('Could not post your comment.');
+    return;
+  }
+  // Re-open the panel so the new comment (and anyone else's) shows up.
+  await openDetail(pin);
 }
 
 async function handleRate(pin, rating) {
@@ -120,6 +146,12 @@ async function init() {
 
   try {
     const map = await createMap(document.getElementById('map'));
+    // Tapping the map dismisses the open Filters panel (marker clicks don't fire
+    // the map 'click' event, so this won't interfere with opening a pin).
+    map.addListener('click', () => {
+      const fp = document.getElementById('filter-panel');
+      if (fp) fp.hidden = true;
+    });
     await setupSearch(document.getElementById('search'), map);
     setupForm(map, reloadPins);
     setupToolbar(map);

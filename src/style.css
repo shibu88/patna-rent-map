@@ -342,21 +342,24 @@ gmp-place-autocomplete {
   position: absolute;
   inset: 0;
   z-index: 30;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
+  padding: 16px;
 }
 #detail-sheet {
-  width: 100%;
-  max-width: 560px;
-  max-height: 85%;
+  width: min(92%, 400px);
+  max-height: 82%;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
-  border-radius: 16px 16px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6);
+  /* Transparent dark-blue glass card (matches the reference). */
+  background: rgba(20, 24, 40, 0.8);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 #detail-body {
@@ -364,105 +367,132 @@ gmp-place-autocomplete {
   overflow-y: auto;
   display: block;
 }
-.d-images {
+/* Header: MONTHLY RENT + amount, with share / report / close */
+.d-head {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  margin-bottom: 12px;
-}
-.d-images img {
-  height: 140px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-.d-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-.d-badge {
-  padding: 3px 9px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text);
-}
-.d-badge.ok {
-  background: rgba(57, 217, 138, 0.18);
-  color: var(--accent);
-}
-.d-badge.muted {
-  color: var(--muted);
-}
-.d-badge.warn {
-  background: rgba(255, 107, 107, 0.18);
-  color: var(--danger);
-}
-.d-rows {
-  display: flex;
-  flex-direction: column;
-}
-.d-row {
-  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 7px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 14px;
 }
-.d-label {
+.d-head-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
   color: var(--muted);
 }
-.d-value {
-  text-align: right;
-  font-weight: 600;
+.d-rent {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 2px;
 }
-.d-feedback {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.05);
-  font-size: 14px;
-  line-height: 1.45;
-}
-.d-action {
+.d-head-btns {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
+  flex: none;
 }
-.d-action-label {
-  font-size: 13px;
-  color: var(--muted);
-  min-width: 78px;
-}
-.stars {
-  display: inline-flex;
-  gap: 2px;
-}
-.stars .star {
+.d-iconbtn {
+  width: 34px;
+  height: 34px;
   border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.25);
-  font-size: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 15px;
   line-height: 1;
   cursor: pointer;
-  padding: 0 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.stars .star.on {
-  color: #ffd34d;
+.d-iconbtn.on {
+  background: rgba(255, 107, 107, 0.22);
 }
-.report-btns {
+
+/* Info chips with a coloured dot */
+.d-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 14px 0 4px;
+}
+.d-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+.d-chip .d-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot, var(--muted));
+}
+.d-chip.c-bhk {
+  --dot: #a78bfa;
+}
+.d-chip.c-furnish {
+  --dot: var(--accent);
+}
+.d-chip.c-maint {
+  --dot: #f5a623;
+}
+.d-chip.c-gated {
+  --dot: #4aa3ff;
+}
+.d-chip.c-deposit {
+  --dot: #f5a623;
+}
+
+/* Meta row (society / sqft / pinned-ago) */
+.d-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 12px 0 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Links (Get directions, See flats available) */
+.d-link {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+.d-directions {
+  display: inline-block;
+  margin: 8px 0 4px;
+}
+
+/* Report panel (revealed by the flag icon) */
+.d-report {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.d-report-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+.d-report-btns {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-.report-btns button {
+.d-report-btns button {
   padding: 6px 10px;
   border: 1px solid rgba(255, 107, 107, 0.4);
   border-radius: 8px;
@@ -476,6 +506,120 @@ gmp-place-autocomplete {
   font-size: 13px;
   color: var(--danger);
   font-weight: 600;
+}
+
+/* Context card ("Not for rent" / availability) */
+.d-card {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.d-card-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+.d-card-text {
+  margin: 6px 0 8px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* Sections (community rating, comments) */
+.d-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.d-section-head {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.d-rating-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.d-chev {
+  color: var(--muted);
+}
+.d-stars {
+  display: flex;
+  gap: 2px;
+  margin-top: 8px;
+}
+.d-star {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.d-star.on {
+  color: #ffd34d;
+}
+
+/* Comments */
+.d-comment {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
+}
+.d-comment-text {
+  font-size: 14px;
+  line-height: 1.4;
+}
+.d-comment-time {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.d-comment-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.d-comment-form input {
+  flex: 1;
+  padding: 10px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9px;
+  background: #111620;
+  color: var(--text);
+  font-size: 14px;
+}
+.d-comment-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.d-comment-form button {
+  flex: none;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #06281a;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.d-comment-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 /* Floating "List My Flat" button */

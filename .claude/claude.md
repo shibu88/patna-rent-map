@@ -63,6 +63,9 @@ A crowdsourced map of flat rents in Patna. Tenants and owners pin what a flat re
 ### `contacts/{autoId}`
 `{ pinId, phone, email, ownerUid, createdAt }`. Private lister contact details collected by the "Add Your Flat" form. **Not publicly readable** — only the owner can read their own; never shown on the map. Kept separate from `pins` (which is world-readable) so phone/email stay private.
 
+### `comments/{autoId}`
+`{ pinId, uid, text (1–500 chars), createdAt }`. Public comment thread shown in the pin detail panel. Anyone signed-in can create; no updates; author can delete. Loaded per-pin on panel open (queried by `pinId`, sorted newest-first client-side — no composite index needed).
+
 ## Architecture
 
 - On page load, read **all** pins, ratings and reports once (three collection reads), then join in the browser by `pinId`: average rating per pin, report count per pin. No per-viewport queries.
@@ -80,6 +83,7 @@ A crowdsourced map of flat rents in Patna. Tenants and owners pin what a flat re
 - Update/delete a pin only by its owner.
 - `ratings` and `reports` doc id must equal `pinId + "_" + request.auth.uid`; no updates to reports.
 - `contacts` is **not** publicly readable: read only by the owner (`ownerUid == uid`); signed-in create with validation; no update/delete.
+- `comments` is publicly readable; signed-in create (`uid == request.auth.uid`, text 1–500, server `createdAt`); no update; author-only delete.
 
 ## Build order (do one step at a time; stop and let me test each)
 
